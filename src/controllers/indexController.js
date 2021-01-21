@@ -93,3 +93,30 @@ exports.showCategory = async (req, res) => {
         });
     return json(res, results);
 };
+
+exports.search = async (req, res) => {
+    q = req.query.q;
+    if(!q) {
+        return errorJson(res, "Please provide query search!");
+    }
+    const htmlResult = await request.get(`${process.env.BASE_URL}/?s=${q}`);
+    const $ = await cheerio.load(htmlResult);
+    const results = [];
+    $(".post-col").each((index, el) => {
+        const title = $(el).find(".title").text().trim();
+        const time = $(el).find(".time").text().trim();
+        const servings = $(el).find(".servings").text().trim();
+        const difficulty = $(el).find(".difficulty").text().trim();
+        const result = {
+            title,
+            time,
+            servings,
+            difficulty
+        }
+        if (time && servings && difficulty) {
+            results.push(result);
+        }
+    });
+
+    return json(res, results);
+}
