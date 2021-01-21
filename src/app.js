@@ -18,6 +18,7 @@ app.use(express.json());
 app.get("/", indexController.index);
 app.get("/new-recipe", indexController.new);
 app.get("/categories", indexController.categories);
+app.get("/categories/:categoryId", indexController.showCategory);
 
 app.use(middlewares.notFound);
 app.use(middlewares.errorHandler);
