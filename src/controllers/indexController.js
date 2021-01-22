@@ -15,7 +15,6 @@ exports.new = async (req, res) => {
     try {
         const htmlResult = await request.get(`${process.env.BASE_URL}`);
         const $ = await cheerio.load(htmlResult);
-        console.log(htmlResult);
         const fullUrl = req.protocol + "://" + req.get("host") + req.originalUrl;
         const results = [];
         $(".post-blocks-row")
@@ -30,6 +29,13 @@ exports.new = async (req, res) => {
                 const time = selector.find(".time").text().trim();
                 const servings = selector.find(".servings").text().trim();
                 const difficulty = selector.find(".difficulty").text().trim();
+                let images = [];
+                let imagesRaw = $(el).find(".thumb-wrapper").find("img").attr("data-lazy-srcset");
+                if(!imagesRaw) {
+                    images.push($(el).find(".thumb-wrapper").find("img").attr("data-lazy-src"));
+                }else {
+                    images = imagesRaw.split(",").map(img => img.trim().split(" ")[0])
+                }
     
                 const result = {
                     id: id.substring(0, id.length - 1),
@@ -37,7 +43,8 @@ exports.new = async (req, res) => {
                     time,
                     servings,
                     difficulty,
-                    recipe: fullUrl+'/'+id.substring(0, id.length - 1)
+                    recipe: fullUrl+'/'+id.substring(0, id.length - 1),
+                    images
                 };
     
                 if (time && servings && difficulty) {
