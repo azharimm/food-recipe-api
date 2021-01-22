@@ -16,6 +16,7 @@
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "helmet": "^4.4.0",
+    "modern-random-ua": "^1.0.3",
     "morgan": "^1.10.0",
     "nodemon": "^2.0.7",
     "request": "^2.88.2",
