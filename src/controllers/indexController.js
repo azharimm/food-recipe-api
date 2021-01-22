@@ -315,7 +315,7 @@ exports.search = async (req, res) => {
 
 exports.test = async (req, res) => {
     try {
-        const browser = await puppeteer.launch({args: [
+        const browser = await puppeteer.launch({'args': [
             '--no-sandbox',
             '--disable-setuid-sandbox',
           ],
@@ -323,6 +323,7 @@ exports.test = async (req, res) => {
         const page = await browser.newPage();
         await page.goto(`${process.env.BASE_URL}`);
         const content = await page.content();
+        console.log(content);
         const $ = await cheerio.load(content);
         const fullUrl =
             req.protocol + "://" + req.get("host") + req.originalUrl;
