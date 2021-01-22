@@ -1,5 +1,6 @@
 const request = require("request-promise");
 const cheerio = require("cheerio");
+const puppeteer = require('puppeteer')
 const randomUA = require("modern-random-ua");
 const { json, errorJson } = require("../utils/response");
 
@@ -306,6 +307,67 @@ exports.search = async (req, res) => {
             }
         });
 
+        return json(res, results);
+    } catch (error) {
+        return errorJson(res, error);
+    }
+};
+
+exports.test = async (req, res) => {
+    try {
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
+        await page.goto('https://www.masakapahariini.com/');
+        const content = await page.content();
+        const $ = await cheerio.load(content);
+        const fullUrl =
+            req.protocol + "://" + req.get("host") + req.originalUrl;
+        const results = [];
+        $(".post-blocks-row")
+            .children("div")
+            .each((index, el) => {
+                let selector = $(el).find(".post-info");
+                const id = $(el)
+                    .find("a")
+                    .attr("href")
+                    .replace(`${process.env.BASE_URL}/resep/`, "");
+                const title = selector.children(".title").text().trim();
+                const time = selector.find(".time").text().trim();
+                const servings = selector.find(".servings").text().trim();
+                const difficulty = selector.find(".difficulty").text().trim();
+                let images = [];
+                let imagesRaw = $(el)
+                    .find(".thumb-wrapper")
+                    .find("img")
+                    .attr("data-lazy-srcset");
+                if (!imagesRaw) {
+                    images.push(
+                        $(el)
+                            .find(".thumb-wrapper")
+                            .find("img")
+                            .attr("data-lazy-src")
+                    );
+                } else {
+                    images = imagesRaw
+                        .split(",")
+                        .map((img) => img.trim().split(" ")[0]);
+                }
+
+                const result = {
+                    id: id.substring(0, id.length - 1),
+                    title,
+                    time,
+                    servings,
+                    difficulty,
+                    recipe: fullUrl + "/" + id.substring(0, id.length - 1),
+                    images,
+                };
+
+                if (time && servings && difficulty) {
+                    results.push(result);
+                }
+            });
+        await browser.close();
         return json(res, results);
     } catch (error) {
         return errorJson(res, error);

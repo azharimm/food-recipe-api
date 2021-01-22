@@ -21,6 +21,7 @@ app.get("/recipe/:recipeId", indexController.showRecipe);
 app.get("/categories", indexController.categories);
 app.get("/categories/:categoryId", indexController.showCategory);
 app.get("/search", indexController.search);
+app.get("/test", indexController.test);
 
 app.use(middlewares.notFound);
 app.use(middlewares.errorHandler);
