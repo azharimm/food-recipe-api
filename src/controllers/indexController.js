@@ -88,11 +88,11 @@ exports.showRecipe = async (req, res) => {
         $(".step").each((index, el) => {
             let num = index+1; 
             let step = $(el).find(".step-description").children("p").text();
-            let images = $(el).find(".step-image-wrapper").find("img").attr("data-lazy-srcset").split(",");
+            let images = $(el).find(".step-image-wrapper").find("img").attr("data-lazy-srcset");
             steps.push({
                 num,
                 step,
-                images: images.map(img => img.trim().split(" ")[0])
+                images: images ? images.split(",").map(img => img.trim().split(" ")[0]) : []
             });
         });
         return json(res, {ingredients, steps});
@@ -145,6 +145,13 @@ exports.showCategory = async (req, res) => {
                 const time = selector.find(".time").text().trim();
                 const servings = selector.find(".servings").text().trim();
                 const difficulty = selector.find(".difficulty").text().trim();
+                let images = [];
+                let imagesRaw = $(el).find(".thumb-wrapper").find("img").attr("data-lazy-srcset");
+                if(!imagesRaw) {
+                    images.push($(el).find(".thumb-wrapper").find("img").attr("data-lazy-src"));
+                }else {
+                    images = imagesRaw.split(",").map(img => img.trim().split(" ")[0])
+                }
     
                 const result = {
                     id: id.substring(0, id.length - 1),
@@ -153,6 +160,7 @@ exports.showCategory = async (req, res) => {
                     servings,
                     difficulty,
                     recipe: fullUrl+'/recipe/'+id.substring(0, id.length - 1),
+                    images
                 };
     
                 if (time && servings && difficulty) {
@@ -171,19 +179,34 @@ exports.search = async (req, res) => {
         if(!q) {
             return errorJson(res, "Please provide query search!");
         }
+        const fullUrl = req.protocol + "://" + req.get("host");
         const htmlResult = await request.get(`${process.env.BASE_URL}/?s=${q}`);
         const $ = await cheerio.load(htmlResult);
         const results = [];
         $(".post-col").each((index, el) => {
+            const id = $(el)
+                    .find("a")
+                    .attr("href")
+                    .replace(`${process.env.BASE_URL}/resep/`, "");
             const title = $(el).find(".title").text().trim();
             const time = $(el).find(".time").text().trim();
             const servings = $(el).find(".servings").text().trim();
             const difficulty = $(el).find(".difficulty").text().trim();
+            let images = [];
+            let imagesRaw = $(el).find(".thumb-wrapper").find("img").attr("data-lazy-srcset");
+            if(!imagesRaw) {
+                images.push($(el).find(".thumb-wrapper").find("img").attr("data-lazy-src"));
+            }else {
+                images = imagesRaw.split(",").map(img => img.trim().split(" ")[0])
+            }
             const result = {
+                id: id.substring(0, id.length - 1),
                 title,
                 time,
                 servings,
-                difficulty
+                difficulty,
+                recipe: fullUrl+'/recipe/'+id.substring(0, id.length - 1),
+                images
             }
             if (time && servings && difficulty) {
                 results.push(result);
