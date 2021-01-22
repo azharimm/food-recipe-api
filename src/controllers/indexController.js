@@ -63,6 +63,10 @@ exports.showRecipe = async (req, res) => {
         const recipeId = req.params.recipeId;
         const htmlResult = await request.get(`${process.env.BASE_URL}/resep/${recipeId}`);
         const $ = await cheerio.load(htmlResult);
+        const recipeTitle = $("h1").text();
+        const time = $(".recipe-info").find(".time").first().text().trim();
+        const servings = $(".recipe-info").find(".servings").first().text().trim();
+        const difficulty = $(".recipe-info").find(".difficulty").first().text().trim();
         const ingredients = [];
         const steps = [];
         $(".group-of-ingredients").each((index, el) => {
@@ -95,7 +99,7 @@ exports.showRecipe = async (req, res) => {
                 images: images ? images.split(",").map(img => img.trim().split(" ")[0]) : []
             });
         });
-        return json(res, {ingredients, steps});
+        return json(res, {recipeTitle, recipeInfo: {time, servings, difficulty}, ingredients, steps});
         
     } catch (error) {
         return errorJson(res, error);
