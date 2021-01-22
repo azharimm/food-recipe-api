@@ -315,7 +315,11 @@ exports.search = async (req, res) => {
 
 exports.test = async (req, res) => {
     try {
-        const browser = await puppeteer.launch();
+        const browser = await puppeteer.launch({args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+          ],
+        });
         const page = await browser.newPage();
         await page.goto('https://www.masakapahariini.com/');
         const content = await page.content();
