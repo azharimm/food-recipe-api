@@ -321,7 +321,7 @@ exports.test = async (req, res) => {
           ],
         });
         const page = await browser.newPage();
-        await page.goto('https://www.masakapahariini.com/');
+        await page.goto(`${process.env.BASE_URL}`);
         const content = await page.content();
         const $ = await cheerio.load(content);
         const fullUrl =
