@@ -15,6 +15,7 @@ exports.new = async (req, res) => {
     try {
         const htmlResult = await request.get(`${process.env.BASE_URL}`);
         const $ = await cheerio.load(htmlResult);
+        console.log(htmlResult);
         const fullUrl = req.protocol + "://" + req.get("host") + req.originalUrl;
         const results = [];
         $(".post-blocks-row")
@@ -80,9 +81,11 @@ exports.showRecipe = async (req, res) => {
         $(".step").each((index, el) => {
             let num = index+1; 
             let step = $(el).find(".step-description").children("p").text();
+            let images = $(el).find(".step-image-wrapper").find("img").attr("data-lazy-srcset").split(",");
             steps.push({
                 num,
                 step,
+                images: images.map(img => img.trim().split(" ")[0])
             });
         });
         return json(res, {ingredients, steps});
@@ -184,4 +187,4 @@ exports.search = async (req, res) => {
     } catch (error) {
         return errorJson(res, error);        
     }
-}
+};
