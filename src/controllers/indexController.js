@@ -15,6 +15,7 @@ exports.new = async (req, res) => {
     try {
         const htmlResult = await request.get(`${process.env.BASE_URL}`);
         const $ = await cheerio.load(htmlResult);
+        const fullUrl = req.protocol + "://" + req.get("host") + req.originalUrl;
         const results = [];
         $(".post-blocks-row")
             .children("div")
@@ -35,6 +36,7 @@ exports.new = async (req, res) => {
                     time,
                     servings,
                     difficulty,
+                    recipe: fullUrl+'/'+id.substring(0, id.length - 1)
                 };
     
                 if (time && servings && difficulty) {
@@ -94,6 +96,7 @@ exports.categories = async (req, res) => {
     try {
         const htmlResult = await request.get(`${process.env.BASE_URL}`);
         const $ = await cheerio.load(htmlResult);
+        const fullUrl = req.protocol + "://" + req.get("host");
         const categories = [];
         $(".category-col").each((index, el) => {
             const categoryId = $(el)
@@ -103,7 +106,8 @@ exports.categories = async (req, res) => {
             const category = $(el).find("span").text();
             categories.push({
                 categoryId: categoryId.substring(0, categoryId.length - 1),
-                category,
+                categoryName: category,
+                categoryItems: fullUrl+'/categories/'+categoryId.substring(0, categoryId.length - 1)
             });
         });
         return json(res, categories);
@@ -117,6 +121,7 @@ exports.showCategory = async (req, res) => {
         categoryId = req.params.categoryId;
         const htmlResult = await request.get(`${process.env.BASE_URL}/resep-masakan/${categoryId}`);
         const $ = await cheerio.load(htmlResult);
+        const fullUrl = req.protocol + "://" + req.get("host");
         const results = [];
         $(".post-blocks-row")
             .children("div")
@@ -137,6 +142,7 @@ exports.showCategory = async (req, res) => {
                     time,
                     servings,
                     difficulty,
+                    recipe: fullUrl+'/recipe/'+id.substring(0, id.length - 1),
                 };
     
                 if (time && servings && difficulty) {
