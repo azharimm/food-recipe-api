@@ -1,7 +1,6 @@
 const request = require("request-promise");
 const cheerio = require("cheerio");
 const puppeteer = require('puppeteer')
-const randomUA = require("modern-random-ua");
 const { json, errorJson } = require("../utils/response");
 
 exports.index = (req, res) => {
@@ -40,13 +39,15 @@ exports.index = (req, res) => {
 
 exports.new = async (req, res) => {
     try {
-        const htmlResult = await request.get({
-            uri: `${process.env.BASE_URL}`,
-            headers: {
-                "User-Agent": randomUA.generate(),
-            },
+        const browser = await puppeteer.launch({'args': [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+          ],
         });
-        const $ = await cheerio.load(htmlResult);
+        const page = await browser.newPage();
+        await page.goto(`${process.env.BASE_URL}`);
+        const content = await page.content();
+        const $ = await cheerio.load(content);
         const fullUrl =
             req.protocol + "://" + req.get("host") + req.originalUrl;
         const results = [];
@@ -94,6 +95,7 @@ exports.new = async (req, res) => {
                     results.push(result);
                 }
             });
+        await browser.close();
         return json(res, results);
     } catch (error) {
         return errorJson(res, error);
@@ -102,11 +104,16 @@ exports.new = async (req, res) => {
 
 exports.showRecipe = async (req, res) => {
     try {
+        const browser = await puppeteer.launch({'args': [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+          ],
+        });
         const recipeId = req.params.recipeId;
-        const htmlResult = await request.get(
-            `${process.env.BASE_URL}/resep/${recipeId}`
-        );
-        const $ = await cheerio.load(htmlResult);
+        const page = await browser.newPage();
+        await page.goto(`${process.env.BASE_URL}/resep/${recipeId}`);
+        const content = await page.content();
+        const $ = await cheerio.load(content);
         const recipeTitle = $("h1").text();
         const time = $(".recipe-info").find(".time").first().text().trim();
         const servings = $(".recipe-info")
@@ -159,6 +166,7 @@ exports.showRecipe = async (req, res) => {
                     : [],
             });
         });
+        await browser.close();
         return json(res, {
             recipeTitle,
             recipeInfo: { time, servings, difficulty },
@@ -172,8 +180,15 @@ exports.showRecipe = async (req, res) => {
 
 exports.categories = async (req, res) => {
     try {
-        const htmlResult = await request.get(`${process.env.BASE_URL}`);
-        const $ = await cheerio.load(htmlResult);
+        const browser = await puppeteer.launch({'args': [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+          ],
+        });
+        const page = await browser.newPage();
+        await page.goto(`${process.env.BASE_URL}`);
+        const content = await page.content();
+        const $ = await cheerio.load(content);
         const fullUrl = req.protocol + "://" + req.get("host");
         const categories = [];
         $(".category-col").each((index, el) => {
@@ -191,6 +206,7 @@ exports.categories = async (req, res) => {
                     categoryId.substring(0, categoryId.length - 1),
             });
         });
+        await browser.close();
         return json(res, categories);
     } catch (error) {
         return errorJson(res, error);
@@ -200,10 +216,15 @@ exports.categories = async (req, res) => {
 exports.showCategory = async (req, res) => {
     try {
         categoryId = req.params.categoryId;
-        const htmlResult = await request.get(
-            `${process.env.BASE_URL}/resep-masakan/${categoryId}`
-        );
-        const $ = await cheerio.load(htmlResult);
+        const browser = await puppeteer.launch({'args': [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+          ],
+        });
+        const page = await browser.newPage();
+        await page.goto(`${process.env.BASE_URL}/resep-masakan/${categoryId}`);
+        const content = await page.content();
+        const $ = await cheerio.load(content);
         const fullUrl = req.protocol + "://" + req.get("host");
         const results = [];
         $(".post-blocks-row")
@@ -251,6 +272,7 @@ exports.showCategory = async (req, res) => {
                     results.push(result);
                 }
             });
+        await browser.close();
         return json(res, results);
     } catch (error) {
         return errorJson(res, error);
@@ -264,8 +286,15 @@ exports.search = async (req, res) => {
             return errorJson(res, "Please provide query search!");
         }
         const fullUrl = req.protocol + "://" + req.get("host");
-        const htmlResult = await request.get(`${process.env.BASE_URL}/?s=${q}`);
-        const $ = await cheerio.load(htmlResult);
+        const browser = await puppeteer.launch({'args': [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+          ],
+        });
+        const page = await browser.newPage();
+        await page.goto(`${process.env.BASE_URL}/?s=${q}`);
+        const content = await page.content();
+        const $ = await cheerio.load(content);
         const results = [];
         $(".post-col").each((index, el) => {
             const id = $(el)
@@ -306,72 +335,6 @@ exports.search = async (req, res) => {
                 results.push(result);
             }
         });
-
-        return json(res, results);
-    } catch (error) {
-        return errorJson(res, error);
-    }
-};
-
-exports.test = async (req, res) => {
-    try {
-        const browser = await puppeteer.launch({'args': [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-          ],
-        });
-        const page = await browser.newPage();
-        await page.goto(`${process.env.BASE_URL}`);
-        const content = await page.content();
-        console.log(content);
-        const $ = await cheerio.load(content);
-        const fullUrl =
-            req.protocol + "://" + req.get("host") + req.originalUrl;
-        const results = [];
-        $(".post-blocks-row")
-            .children("div")
-            .each((index, el) => {
-                let selector = $(el).find(".post-info");
-                const id = $(el)
-                    .find("a")
-                    .attr("href")
-                    .replace(`${process.env.BASE_URL}/resep/`, "");
-                const title = selector.children(".title").text().trim();
-                const time = selector.find(".time").text().trim();
-                const servings = selector.find(".servings").text().trim();
-                const difficulty = selector.find(".difficulty").text().trim();
-                let images = [];
-                let imagesRaw = $(el)
-                    .find(".thumb-wrapper")
-                    .find("img")
-                    .attr("data-lazy-srcset");
-                if (!imagesRaw) {
-                    images.push(
-                        $(el)
-                            .find(".thumb-wrapper")
-                            .find("img")
-                            .attr("data-lazy-src")
-                    );
-                } else {
-                    images = imagesRaw
-                        .split(",")
-                        .map((img) => img.trim().split(" ")[0]);
-                }
-
-                const result = {
-                    id: id.substring(0, id.length - 1),
-                    title,
-                    time,
-                    servings,
-                    difficulty,
-                    recipe: fullUrl + "/" + id.substring(0, id.length - 1),
-                    images,
-                };
-
-                if (time && servings && difficulty) {
-                    results.push(result);
-                }
-            });
         await browser.close();
         return json(res, results);
     } catch (error) {
