@@ -8,6 +8,31 @@ exports.index = (req, res) => {
     return json(res, {
         maintainer: "Azhari Muhammad M <azhari.marzan@gmail.com>",
         source: "https://github.com/azharimm/food-recipe-api",
+        newest_recipes: {
+            endpoint: '/recipe',
+            description: 'Show list of newest recipes',
+            example: fullUrl+'recipe'
+        },
+        details_recipe: {
+            endpoint: '/recipe/:recipeId',
+            description: 'Show details of the recipes',
+            example: fullUrl+'recipe/resep-ayam-goreng-krispi-rumahan'
+        },
+        categories: {
+            endpoint: '/categories',
+            description: 'Show list of food categories',
+            example: fullUrl+'categories'
+        },
+        category_items: {
+            endpoint: '/categories/:categoryId',
+            description: 'Show list of recipes on selected category',
+            example: fullUrl+'categories/masakan-hari-raya'
+        },
+        search: {
+            endpoint: '/search?q=',
+            description: 'Search recipe',
+            example: fullUrl+'search?q=ayam krispi'
+        }
     });
 };
 
