@@ -48,6 +48,48 @@ exports.new = async (req, res) => {
     }
 };
 
+exports.showRecipe = async (req, res) => {
+    try {
+        const recipeId = req.params.recipeId;
+        const htmlResult = await request.get(`${process.env.BASE_URL}/resep/${recipeId}`);
+        const $ = await cheerio.load(htmlResult);
+        const ingredients = [];
+        const steps = [];
+        $(".group-of-ingredients").each((index, el) => {
+            let title = $(el).children(".group-title").text();
+            let items = [];
+            if(!title) {
+                title = "Bahan - bahan";
+            }
+            $(el).children("ul").children("li").each((idx, next) => {
+                let qty = $(next).find(".quantity").text();
+                let item = $(next).find(".ingredient").text().trim();
+                let qtySymbol = item.split(" ")[0];
+                items.push({
+                    qty: qty+" "+qtySymbol,
+                    item: item.replace(qtySymbol, "").trim()
+                });
+            });
+            ingredients.push({
+                title,
+                items
+            })
+        });
+        $(".step").each((index, el) => {
+            let num = index+1; 
+            let step = $(el).find(".step-description").children("p").text();
+            steps.push({
+                num,
+                step,
+            });
+        });
+        return json(res, {ingredients, steps});
+        
+    } catch (error) {
+        return errorJson(res, error);
+    }
+};
+
 exports.categories = async (req, res) => {
     try {
         const htmlResult = await request.get(`${process.env.BASE_URL}`);
